@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<!-- saved from url=(0085)https://mdx.mrooms.net/pluginfile.php/5493444/mod_resource/content/1/dataExample.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Surgery Database Example</title>
+    <script src="./Surgery Database Example_files/crypto-js.min.js.download"></script>
+</head>
+<body>
+<h1>Surgery Database Example</h1>
+<h3>Ensure you open console to see output!</h3>
+
+<button onclick="createDatabase()">Create/Open Database</button>
+<button onclick="getMyData()">Get Data</button>
+<button onclick="showMyData()">Show Data</button>
+<button onclick="addMyData()">Add Data</button><br>
+<button onclick="queryData()">Query Data</button>
+<button onclick="queryPerson()">Query Person</button>
+<button onclick="clearData()">Clear Database</button>
+<button onclick="deleteDB()">Delete Database</button>
+<button onclick="closeDB()">Close Database</button><br><br>
+
+<label for="searchInput">Search by Name:</label>
+<input type="text" id="searchInput">
+<button onclick="searchData()">Search</button>
+
+<div id="output"></div>
+<div id="resultContainer"></div>
+<script>
+    var db;
+    var dbName = 'surgeryDB';
+    var encryptionKey = 'myEncryptionKey'; // Replace with your own encryption key
+    var doctor_data;
+    var people_data;
+    var drug_data;
+
+    function createDatabase() {
+        var request = indexedDB.open(dbName, 1);
+
+        request.onerror = function(event) {
+            console.log('Error opening database');
+        };
+
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            console.log('Database opened successfully');
+        };
+
+        request.onupgradeneeded = function(event) {
+            db = event.target.result;
+
+            var doctorStore = db.createObjectStore('doctors', { keyPath: 'id', autoIncrement: true });
+            doctorStore.createIndex('first', 'first', { unique: false });
+            doctorStore.createIndex('last', 'last', { unique: false });
+            doctorStore.createIndex('gender', 'gender', { unique: false });
+            doctorStore.createIndex('address', 'address', { unique: false });
+            doctorStore.createIndex('email', 'email', { unique: false });
+            doctorStore.createIndex('telephone', 'telephone', { unique: false });
+            doctorStore.createIndex('password', 'password', { unique: false });
+
+
+            var peopleStore = db.createObjectStore('people', { keyPath: 'id', autoIncrement: true });
+            peopleStore.createIndex('NHS', 'NHS', { unique: false });
+            peopleStore.createIndex('Title', 'Title', { unique: false });
+            peopleStore.createIndex('First', 'First', { unique: false });
+            peopleStore.createIndex('Last', 'Last', { unique: false });
+            peopleStore.createIndex('DOB', 'DOB', { unique: false });
+            peopleStore.createIndex('Gender', 'Gender', { unique: false });
+            peopleStore.createIndex('Address', 'Address', { unique: false });
+            peopleStore.createIndex('Email', 'Email', { unique: false });
+            peopleStore.createIndex('Telephone', 'Telephone', { unique: false });
+            peopleStore.createIndex('note', 'note', { unique: false });
+            peopleStore.createIndex('password', 'password', { unique: false });
+
+            var drugStore = db.createObjectStore('drugs', { keyPath: 'id', autoIncrement: true });
+            drugStore.createIndex('Name', 'Name', { unique: false });
+
+            console.log('Database upgrade completed');
+        };
+    }
+
+    // Function to generate a secure password
+    function generateSecurePassword() {
+        const length = 10;
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!$£';
+        let password = '';
+
+        for (let i = 0; i < length; i++) {
+            const randomIndex = Math.floor(Math.random() * characters.length);
+            password += characters.charAt(randomIndex);
+        }
+
+        return password;
+    }
+
+
+
+    function encryptData(pwrd) {
+        var epass = CryptoJS.AES.encrypt(pwrd, encryptionKey).toString();
+        return epass;
+    }
+
+    function decryptData(pwrd) {
+        var dpass = CryptoJS.AES.decrypt(pwrd, encryptionKey).toString(CryptoJS.enc.Utf8);
+        return dpass ;
+    }
+
+
+    function deleteDB() {
+
+        console.log("Deleting DB -- refresh browser page to see effect of");
+
+        const request = indexedDB.deleteDatabase(dbName);
+
+        request.onerror = function(event) {
+            console.log("Error deleting IndexedDB database");
+        };
+
+        request.onsuccess = function(event) {
+            console.log("IndexedDB database deleted successfully");
+        };
+
+    }
+    function addMyData() {
+        var transactionDoctors = db.transaction('doctors', 'readwrite');
+        var transactionPeople = db.transaction('people', 'readwrite');
+        var transactionDrugs = db.transaction('drugs', 'readwrite')
+        var doctorStore = transactionDoctors.objectStore('doctors');
+        var peopleStore = transactionPeople.objectStore('people');
+        var drugStore = transactionDrugs.objectStore('drugs');
+        var request;
+
+
+        doctor_data.forEach(doctor => {
+            let passwd = generateSecurePassword();
+            passwd = encryptData(passwd);
+
+            var data = { first: doctor.first_name, last: doctor.last_name, gender: doctor.gender, address: doctor.Address, email: doctor.email, telephone: doctor.Telephone, password: passwd}
+
+            request = doctorStore.add(data);
+
+        });
+
+        people_data.forEach(people => {
+            //let passwd = generateSecurePassword();
+            let passwd = 'hogwarts';
+            passwd = encryptData(passwd);
+
+            var data = { Title: people.Title, NHS: people.NHS, First: people.First, Last: people.Last, gender: people.Gender, DOB: people.DOB, Address: people.Address, email: people.Email, Telephone: people.Telephone, password: passwd}
+
+
+            request = peopleStore.add(data);
+
+        });
+
+        drug_data.forEach(drug => {
+
+            var data = { Name: drug.Drug}
+
+            request = drugStore.add(data);
+
+        });
+
+
+
+        request.onsuccess = function(event) {
+            console.log('Data added successfully');
+        };
+
+        request.onerror = function(event) {
+            console.log('Error adding data');
+        };
+    }
+    function clearData() {
+        var transaction = db.transaction('people', 'readwrite');
+        var peopleStore = transaction.objectStore('people');
+
+        // Clear all entries in the object store
+        var clearRequest = peopleStore.clear();
+
+        clearRequest.onsuccess = function(event) {
+            console.log("All entries cleared successfully");
+        };
+
+        clearRequest.onerror = function(event) {
+            console.log("Error clearing entries in the object store");
+        };
+
+        transaction.oncomplete = function() {
+            console.log("Transaction completed");
+        };
+
+        var transaction = db.transaction('doctors', 'readwrite');
+        var doctorStore = transaction.objectStore('doctors');
+
+        // Clear all entries in the object store
+        clearRequest = doctorStore.clear();
+
+        clearRequest.onsuccess = function(event) {
+            console.log("All entries cleared successfully");
+        };
+
+        clearRequest.onerror = function(event) {
+            console.log("Error clearing entries in the object store");
+        };
+
+        transaction.oncomplete = function() {
+            console.log("Transaction completed");
+        };
+
+        var transaction = db.transaction('drugs', 'readwrite');
+        var drugStore = transaction.objectStore('drugs');
+
+        // Clear all entries in the object store
+        clearRequest = drugStore.clear();
+
+        clearRequest.onsuccess = function(event) {
+            console.log("All entries cleared successfully");
+        };
+
+        clearRequest.onerror = function(event) {
+            console.log("Error clearing entries in the object store");
+        };
+
+        transaction.oncomplete = function() {
+            console.log("Transaction completed");
+        };
+
+
+
+    }
+    function queryData() {
+        var transaction = db.transaction('people', 'readonly');
+        var peopleStore = transaction.objectStore('people');
+
+        var request = peopleStore.openCursor();
+
+        request.onsuccess = function(event) {
+            var cursor = event.target.result;
+            if (cursor) {
+                var data = cursor.value;
+                console.log('ID: ' + data.id + ', Name: ' + data.Last + ', NHS: ' + data.NHS );
+                cursor.continue();
+            }
+        };
+
+        request.onerror = function(event) {
+            console.log('Error querying data');
+        };
+    }
+    function queryPerson() {
+        var transaction = db.transaction('people', 'readonly');
+        var objectStore = transaction.objectStore('people');
+
+        var index = objectStore.index('Last');
+        var request = index.get('Pilch');
+
+        request.onsuccess = function(event) {
+            var data = event.target.result;
+
+            var passwd = decryptData(data.password);
+            if (data) {
+                console.log('ID: ' + data.id + ', Name: ' + data.Last + ', NHS: ' + data.NHS + ' Decrypted password: ' + passwd );
+            } else {
+                console.log('Record not found for the given name');
+            }
+        };
+
+        request.onerror = function(event) {
+            console.log('Error querying data');
+        };
+    }
+
+    function searchData() {
+        var name = document.getElementById('searchInput').value;
+
+        if (!name) {
+            console.log('Please enter a name to search');
+            return;
+        }
+
+        var transaction = db.transaction('people', 'readonly');
+        var objectStore = transaction.objectStore('people');
+
+        var index = objectStore.index('Last');
+        var request = index.get(name);
+
+        request.onsuccess = function(event) {
+            var data = event.target.result;
+            if (data) {
+                displayResult(data);
+            } else {
+                displayResultNotFound();
+            }
+        };
+
+        request.onerror = function(event) {
+            console.log('Error querying data');
+        };
+    }
+
+    function displayResult(data) {
+        //var resultContainer = document.getElementById('resultContainer');
+        var resultContainer = document.getElementById('output');
+        var passwd = decryptData(data.password);
+        resultContainer.innerHTML = `
+        <p>ID: ${data.id}</p>
+        <p>Name: ${data.Last}</p>
+        <p>NHS Number: ${data.NHS}</p>
+        <p>Password (enc): ${data.password}</p>
+        <p>Password (dec): ${passwd}</p>
+      `;
+    }
+
+    function displayResultNotFound() {
+        var resultContainer = document.getElementById('output');
+        resultContainer.innerHTML = '<p>Record not found for the given name</p>';
+    }
+
+
+    function getMyData() {
+        var resultContainer = document.getElementById('output');
+        var outstr = '<p>Getting Data ...</p>'
+        resultContainer.innerHTML = outstr;
+
+        fetch('https://simulacra.uk/CST2570/doctor.json')
+            .then(response => response.json())
+            .then(data => {
+                doctor_data = data;
+            })
+            .catch(error => {
+                console.log('Error:', error);
+            });
+        outstr += '<p>Doctor data received ...</p>';
+        resultContainer.innerHTML = outstr;
+
+        fetch('https://drive.google.com/file/d/1CdMbqKJdbbLnKl32Vy_usfOHImi-3XYU/view?usp=sharing')
+            .then(response => response.json())
+            .then(data => {
+                people_data = data;
+            })
+            .catch(error => {
+                console.log('Error:', error);
+            });
+        outstr += '<p>People data received ...</p>';
+        resultContainer.innerHTML = outstr;
+
+        fetch('https://simulacra.uk/CST2570/medicine.json')
+            .then(response => response.json())
+            .then(data => {
+                drug_data = data;
+            })
+            .catch(error => {
+                console.log('Error:', error);
+            });
+        outstr += '<p>Medicines data received ...</p>';
+        resultContainer.innerHTML = outstr;
+
+        outstr += '<p>All Data received ...</p>';
+        resultContainer.innerHTML = outstr;
+
+    }
+
+    function showMyData() {
+
+        const outputDiv = document.getElementById('output');
+        outputDiv.innerHTML = '';
+
+        doctor_data.forEach(doctor => {
+            const doctorDiv = document.createElement('div');
+            doctorDiv.innerHTML = `
+        <h3>${doctor.first_name} ${doctor.last_name}</h3>
+         <p><strong>ID:</strong> ${doctor.id}</p>
+        <p><strong>Gender:</strong> ${doctor.gender}</p>
+        <p><strong>Address:</strong> ${doctor.Address}</p>
+        <p><strong>Email:</strong> ${doctor.email}</p>
+        <p><strong>Telephone:</strong> ${doctor.Telephone}</p>
+      `;
+            outputDiv.appendChild(doctorDiv);
+        });
+
+        people_data.forEach(people => {
+            const peopleDiv = document.createElement('div');
+            peopleDiv.innerHTML = `
+        <h3>${people.First} ${people.Last}</h3>
+         <p><strong>ID:</strong> ${people.id}</p>
+        <p><strong>Gender:</strong> ${people.Gender}</p>
+        <p><strong>Address:</strong> ${people.Address}</p>
+        <p><strong>Email:</strong> ${people.Email}</p>
+        <p><strong>Telephone:</strong> ${people.Telephone}</p>
+      `;
+            outputDiv.appendChild(peopleDiv);
+        });
+
+        drug_data.forEach(drug => {
+            const drugDiv = document.createElement('div');
+            drugDiv.innerHTML = `
+         <p><strong>ID:</strong> ${drug.id}</p>
+        <p><strong>Drug name:</strong> ${drug.Drug}</p>
+       `;
+            outputDiv.appendChild(drugDiv);
+        });
+
+
+
+    }
+
+    function closeDB() {
+
+        db.close();
+        console.log("Closed DB");
+    }
+</script>
+
+
+</body></html>
