@@ -321,7 +321,7 @@
         var outstr = '<p>Getting Data ...</p>'
         resultContainer.innerHTML = outstr;
 
-        fetch('https://simulacra.uk/CST2570/doctor.json')
+        fetch('https://mrinalsharma14.github.io/medical/JSON/doctors.json')
             .then(response => response.json())
             .then(data => {
                 doctor_data = data;
@@ -332,7 +332,7 @@
         outstr += '<p>Doctor data received ...</p>';
         resultContainer.innerHTML = outstr;
 
-        fetch('https://drive.google.com/file/d/1CdMbqKJdbbLnKl32Vy_usfOHImi-3XYU/view?usp=sharing')
+        fetch('https://mrinalsharma14.github.io/medical/JSON/patients.json')
             .then(response => response.json())
             .then(data => {
                 people_data = data;
@@ -343,7 +343,7 @@
         outstr += '<p>People data received ...</p>';
         resultContainer.innerHTML = outstr;
 
-        fetch('https://simulacra.uk/CST2570/medicine.json')
+        fetch('https://mrinalsharma14.github.io/medical/JSON/medicines.json')
             .then(response => response.json())
             .then(data => {
                 drug_data = data;
